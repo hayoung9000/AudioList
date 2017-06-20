@@ -13,13 +13,14 @@ import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
     ListView list;
-    Button butPlay,butStop;
+    Button butPlay,butStop,butPause;
     TextView textMusic;
     ProgressBar progress;
     String[] music={"KnockKnock","너 사용법","Never"};
     int[] musicResIds={R.raw.knockknock,R.raw.mluv,R.raw.never};
     int selectedMusicId;
     MediaPlayer mediaPlayer;
+    boolean selectedPauseButton;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -27,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
         list=(ListView)findViewById(R.id.list_music);
         butPlay=(Button)findViewById(R.id.but_play);
         butStop=(Button)findViewById(R.id.but_stop);
+        butPause=(Button)findViewById(R.id.but_pause);
         textMusic=(TextView)findViewById(R.id.text_music);
         progress=(ProgressBar)findViewById(R.id.progress_music);
         ArrayAdapter<String> adapter=new ArrayAdapter<String>(this, android.R.layout.simple_list_item_single_choice,music);
@@ -45,14 +47,28 @@ public class MainActivity extends AppCompatActivity {
         butPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mediaPlayer.create(MainActivity.this,selectedMusicId);
+                if(selectedPauseButton) {
+                    mediaPlayer.start();
+                    selectedPauseButton=false;
+                }
+                else
+                    mediaPlayer=MediaPlayer.create(MainActivity.this,selectedMusicId);
                 mediaPlayer.start();
+                progress.setVisibility(View.VISIBLE);
             }
         });
         butStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mediaPlayer.stop();
+                progress.setVisibility(View.INVISIBLE);
+            }
+        });
+        butPause.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+               mediaPlayer.pause();
+                selectedPauseButton=true;
             }
         });
 

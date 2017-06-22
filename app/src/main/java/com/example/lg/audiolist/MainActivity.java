@@ -1,6 +1,7 @@
 package com.example.lg.audiolist;
 
 import android.media.MediaPlayer;
+import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -8,19 +9,21 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.TextView;
+import java.text.SimpleDateFormat;
 
 public class MainActivity extends AppCompatActivity {
     ListView list;
     Button butPlay,butStop,butPause;
-    TextView textMusic;
-    ProgressBar progress;
+    TextView textMusic,textTime;
+    SeekBar progress;
     String[] music={"KnockKnock","너 사용법","Never"};
     int[] musicResIds={R.raw.knockknock,R.raw.mluv,R.raw.never};
     int selectedMusicId;
     MediaPlayer mediaPlayer;
     boolean selectedPauseButton;
+    int i;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,7 +33,8 @@ public class MainActivity extends AppCompatActivity {
         butStop=(Button)findViewById(R.id.but_stop);
         butPause=(Button)findViewById(R.id.but_pause);
         textMusic=(TextView)findViewById(R.id.text_music);
-        progress=(ProgressBar)findViewById(R.id.progress_music);
+        textTime=(TextView)findViewById(R.id.text_time);
+        progress=(SeekBar)findViewById(R.id.progress_music);
         ArrayAdapter<String> adapter=new ArrayAdapter<String>(this, android.R.layout.simple_list_item_single_choice,music);
         list.setAdapter(adapter);
         list.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
@@ -41,27 +45,49 @@ public class MainActivity extends AppCompatActivity {
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int i, long id) {
+                selectedPauseButton=false;
+                mediaPlayer.stop();
                 selectedMusicId=musicResIds[i];
+                MainActivity.this.i=i;
             }
         });
         butPlay.setOnClickListener(new View.OnClickListener() {
+            SimpleDateFormat timeFormat =new SimpleDateFormat("mm:ss");
             @Override
             public void onClick(View v) {
+                textMusic.setText(music[i]);
                 if(selectedPauseButton) {
-                    mediaPlayer.start();
                     selectedPauseButton=false;
                 }
                 else
                     mediaPlayer=MediaPlayer.create(MainActivity.this,selectedMusicId);
                 mediaPlayer.start();
-                progress.setVisibility(View.VISIBLE);
+                Thread musicThread=new Thread(){
+                    @Override
+                    public void run() {
+                        if(mediaPlayer==null) return;
+                        progress.setMax(mediaPlayer.getDuration());
+                        while(mediaPlayer.isPlaying()){
+                            progress.setProgress(mediaPlayer.getCurrentPosition());
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    textTime.setText("진행시간:"+timeFormat.format(mediaPlayer.getCurrentPosition()));
+                                }
+                            });
+                            SystemClock.sleep(200);
+                        }
+                    }
+                };
+                musicThread.start();
+
             }
         });
         butStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mediaPlayer.stop();
-                progress.setVisibility(View.INVISIBLE);
+
             }
         });
         butPause.setOnClickListener(new View.OnClickListener() {
